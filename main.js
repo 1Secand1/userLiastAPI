@@ -1,20 +1,41 @@
 const getUser = getData("https://jsonplaceholder.typicode.com/users");
 const getPosts = getData("https://jsonplaceholder.typicode.com/posts");
 
-let userPosts = mergePostsAndUsers(getPosts, getUser).then((res) => {
-  createUserList(res, "content");
-  userPosts = res;
-});
+async function mergeAndCreateUserList() {
 
-function mergePostsAndUsers(users, posts) {
-  const userPosts = Promise.all([posts, users]).then((data) => {
-    return addPostsToUsers(data[0], data[1]);
-  });
+  try {
 
-  return userPosts;
+    let userPostsData = await mergePostsAndUsers(getPosts, getUser);
+    createUserList(userPostsData, "content");
+
+    const callElementument = document.getElementById("returnHomePage");
+    if (returnHomePage) {
+      callElementument.addEventListener("click", () => {
+        createUserList(userPostsData, 'content');
+      });
+    }
+
+  } catch (error) {
+    throw new Error(error);
+  }
 }
 
-function createUserList(users, containerId) {
+mergeAndCreateUserList();
+
+
+
+async function mergePostsAndUsers(users, posts) {
+  try {
+
+    const data = await Promise.all([posts, users]);
+    return addPostsToUsers(data[0], data[1]);
+  } catch (error) {
+
+    throw new Error(error);
+  }
+}
+
+function createUserList(userPosts, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
 
@@ -24,7 +45,7 @@ function createUserList(users, containerId) {
   h2.textContent = " Посты пользователей";
   ul.append(h2);
 
-  users.forEach((user) => {
+  userPosts.forEach((user) => {
     let p = document.createElement("p");
     let li = document.createElement("li");
     let button = document.createElement("button");
@@ -60,7 +81,7 @@ function displayUserPosts(username, posts, containerId) {
     let li = document.createElement("li");
     li.classList.add("post");
 
-    li.innerHTML = `      
+    li.innerHTML = `
       <img class="img" src="https://via.placeholder.com/50/92c952" alt="изображение пользователя">
 
       <div class="text-content">
@@ -78,17 +99,19 @@ function displayUserPosts(username, posts, containerId) {
   container.append(h2);
   container.append(ul);
 
-  ul = h2 = null
+  ul = h2 = null;
 }
 
-function getData(url) {
-  return new Promise((res) => {
-    const data = new Promise((res) => {
-      res(fetch(url));
-    });
+async function getData(url) {
+  try {
+    const response = await fetch(url);
+    const json = await response.json();
 
-    data.then((response) => res(response.json())).catch(console.log);
-  });
+    return json;
+
+  } catch (error) {
+    throw new Error(error);
+  }
 }
 
 function addPostsToUsers(arrUser, arrPosts) {
@@ -100,36 +123,19 @@ function addPostsToUsers(arrUser, arrPosts) {
     },
   }));
 
-  for (let i = 0, j = 0; i < arrPosts.length; i++) {
-    const post = arrPosts[i];
-    const user = arrUser[j];
+  arrPosts.forEach(post => {
+    const user = arrUser.find(user => user.id === post.userId);
 
-    if (!post) {
-      return;
-    }
-
-    if (user.id == post.userId) {
+    if (user) {
+      const index = arrUser.indexOf(user);
       const { userId, ...newPost } = post;
-      userPosts[j].posts.push(newPost);
+
+      userPosts[index].posts.push(newPost);
     }
+  });
 
-    if (user.id !== arrPosts[i + 1]?.userId) {
-      j++;
-    }
-  }
-
-  /**
-    arrPosts.forEach(post => {
-      const user = arrUser.find(user => user.id === post.userId);
-
-      if (user) {
-        const index = arrUser.indexOf(user);
-        const { userId, ...newPost } = post;
-
-        userPosts[index].posts.push(post);
-      }
-    });
-   */
 
   return userPosts;
 }
+
+
