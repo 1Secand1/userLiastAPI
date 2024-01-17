@@ -26,11 +26,10 @@ mergeAndCreateUserList();
 
 async function mergePostsAndUsers(users, posts) {
   try {
+    const [arrUser, arrPosts] = await Promise.all([posts, users]);
+    return addPostsToUsers(arrUser, arrPosts);
 
-    const data = await Promise.all([posts, users]);
-    return addPostsToUsers(data[0], data[1]);
   } catch (error) {
-
     throw new Error(error);
   }
 }
